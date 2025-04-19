@@ -1,0 +1,39 @@
+.header {
+    display: flex;
+    padding-left: 20px;
+    padding-right: 20px;
+    justify-content: space-between;
+    align-items: center;
+    background-color: black;
+    max-width: 100%;
+    height: 48px;
+}
+
+.header img {
+    object-fit: cover;
+    height: 40px;
+    width: auto;
+}
+
+.navbar-container {
+    display: flex;
+    gap: 20px;
+    color: white;
+}
+
+.header a {
+    color: white;
+    text-decoration: none;
+}
+
+/* phones */
+@media screen and (max-width: 600px) {
+    .header {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .header img {
+        height: 20px;
+    }
+}
