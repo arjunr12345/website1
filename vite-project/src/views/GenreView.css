@@ -1,0 +1,14 @@
+.genre-view img {
+    width: 200px;
+    height: 300px;
+}
+
+.genre-view button {
+    width: 40px;
+    height: 40px;
+    border-radius: 100%;
+    border: 0;
+    background-color: red;
+    margin: 10px;
+    font-weight: 900;
+}
