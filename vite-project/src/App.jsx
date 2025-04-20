@@ -4,7 +4,7 @@ import RegisterView from "./views/RegisterView.jsx"
 import MoviesView from "./views/MoviesView.jsx"
 import './App.css'
 import { BrowserRouter, Routes, Route } from "react-router-dom"
-import GenreView from "./views/GenreView.jsx"
+import GenreView from "./views/GenresView.jsx"
 import DetailView from "./views/DetailView.jsx"
 
 function App() {
