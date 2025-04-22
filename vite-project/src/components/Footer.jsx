@@ -10,7 +10,7 @@ const Footer = () => {
                 <a href="">Privacy Policy</a>
                 <a href="">Support</a>
             </div>
-            <p>321 Movies</p>
+            <p>© 2025 Dolor™</p>
         </div>
     )
 }
