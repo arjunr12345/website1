@@ -1,9 +1,13 @@
 .hero {
     height: 1000px;
+    position: relative; /* Added to position the image inside the hero */
 }
 
 .hero img {
     position: absolute;
+    top: 50%; /* Vertically center */
+    left: 50%; /* Horizontally center */
+    transform: translate(-50%, -50%); /* Adjusts the image position to be exactly centered */
     width: 100%;
     height: 100%;
     object-fit: cover;
