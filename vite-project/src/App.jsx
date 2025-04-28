@@ -6,6 +6,7 @@ import './App.css'
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import GenreView from "./views/GenreView.jsx"
 import DetailView from "./views/DetailView.jsx"
+import ErrorView from "./views/ErrorView.jsx"
 
 function App() {
 	return (
@@ -18,6 +19,8 @@ function App() {
 					<Route path="genre/:genre_id" element={<GenreView />} />
 					<Route path="details/:id" element={<DetailView />} />
 				</Route>
+				<Route path="*" element={<ErrorView />} />``
+
 			</Routes>
 		</BrowserRouter>
 	)
