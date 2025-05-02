@@ -1,15 +1,63 @@
-import "./Header.css"
+import { useState, useEffect } from "react";
+import { useNavigate, NavLink } from "react-router-dom";
+import "./Header.css";
 
 const Header = () => {
-    return (
-        <div className="header">
-            <a href="/">Dolor™ Stream</a>
-            <div className="navbar-container">
-                <a href="/login">Log In</a>
-                <a href="/register">Register</a>
-            </div>
-        </div>
-    );
-}
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const current = localStorage.getItem("currentUser");
+    if (current) {
+      try {
+        const parsed = JSON.parse(current);
+        setUser(parsed);
+      } catch (e) {
+        setUser({ firstName: current });
+      }
+    }
+  }, []);
+
+  const logout = () => {
+    localStorage.removeItem("currentUser");
+    setUser(null);
+    navigate("/");
+  };
+
+  return (
+    <header className="header">
+      <NavLink to="/" className="logo-text">
+        Dolor™ Stream
+      </NavLink>
+      <nav className="nav-toggle">
+        <NavLink
+          to={user ? "/movies" : "/login"}
+          className={({ isActive }) => isActive && user ? 'tab active' : 'tab'}
+        >
+          Movies
+        </NavLink>
+        <NavLink
+          to={user ? "/tv" : "/login"}
+          className={({ isActive }) => isActive && user ? 'tab active' : 'tab'}
+        >
+          TV Shows
+        </NavLink>
+      </nav>
+      <div className="navbar-container">
+        {user ? (
+          <>
+            <span className="welcome">{user.firstName}</span>
+            <button onClick={logout} className="logout-button">Log Out</button>
+          </>
+        ) : (
+          <>
+            <NavLink to="/login" className="auth-link">Log In</NavLink>
+            <NavLink to="/register" className="auth-link">Register</NavLink>
+          </>
+        )}
+      </div>
+    </header>
+  );
+};
 
 export default Header;
