@@ -6,7 +6,10 @@ import GenreView from "./views/GenreView.jsx";
 import DetailView from "./views/DetailView.jsx";
 import TvList from "./views/TvList.jsx";
 import TvDetail from "./views/TvDetail.jsx";
-import TvGenreView from "./views/tvgenreview";
+import TvGenreView from "./views/tvgenreview.jsx";
+import AnimeView from "./views/AnimeView.jsx";
+import AnimeGenreView from "./views/AnimeGenreView.jsx";
+import AnimeDetail from "./views/AnimeDetail.jsx";
 import ErrorView from "./views/ErrorView.jsx";
 import './App.css';
 
@@ -20,17 +23,25 @@ function App() {
         <Route path="/login" element={<LoginView />} />
         <Route path="/register" element={<RegisterView />} />
 
+        {/* Movies section */}
         <Route path="/movies" element={<MoviesView />}>
           <Route path="genre/:genre_id" element={<GenreView />} />
           <Route path="details/:id" element={<DetailView />} />
         </Route>
 
-        {/* Wrap all /tv routes under TvList layout */}
+        {/* TV section */}
         <Route path="/tv" element={<TvList />}>
           <Route path="genre/:genre_id" element={<TvGenreView />} />
           <Route path=":id" element={<TvDetail />} />
         </Route>
 
+        {/* Anime section */}
+        <Route path="/anime" element={<AnimeView />}>
+          <Route path="genre/:genre" element={<AnimeGenreView />} />
+          <Route path="details/:anime_id" element={<AnimeDetail />} />
+        </Route>
+
+        {/* Catch-all error page */}
         <Route path="*" element={<ErrorView />} />
       </Routes>
     </BrowserRouter>

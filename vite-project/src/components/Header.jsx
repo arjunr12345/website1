@@ -32,15 +32,21 @@ const Header = () => {
       <nav className="nav-toggle">
         <NavLink
           to={user ? "/movies" : "/login"}
-          className={({ isActive }) => isActive && user ? 'tab active' : 'tab'}
+          className={({ isActive }) => (isActive && user ? "tab active" : "tab")}
         >
           Movies
         </NavLink>
         <NavLink
           to={user ? "/tv" : "/login"}
-          className={({ isActive }) => isActive && user ? 'tab active' : 'tab'}
+          className={({ isActive }) => (isActive && user ? "tab active" : "tab")}
         >
           TV Shows
+        </NavLink>
+        <NavLink
+          to={user ? "/anime" : "/login"}
+          className={({ isActive }) => (isActive && user ? "tab active" : "tab")}
+        >
+          Anime
         </NavLink>
       </nav>
       <div className="navbar-container">
