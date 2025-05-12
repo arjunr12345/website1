@@ -9,7 +9,6 @@ const AnimeDetail = () => {
   const [language, setLanguage] = useState("sub");
   const [server, setServer] = useState("vidsrc");
   const [streamUrl, setStreamUrl] = useState("");
-  const [loadingStream, setLoadingStream] = useState(false);
 
   // Fetch AniList data (anime details)
   useEffect(() => {
@@ -40,23 +39,23 @@ const AnimeDetail = () => {
         variables: { id: parseInt(anime_id) },
       }),
     })
-      .then(res => res.json())
-      .then(data => setAnime(data.data.Media));
+      .then((res) => res.json())
+      .then((data) => setAnime(data.data.Media));
   }, [anime_id]);
 
   // Generate the stream URL when server or episode changes
   useEffect(() => {
     if (!anime) return;
 
-    // Check the selected server and generate appropriate URLs
     if (server === "vidsrc") {
       setStreamUrl(`https://vidsrc.cc/v2/embed/anime/ani${anime.id}/${episode}/${language}`);
     } else if (server === "vidsrc.icu") {
       const langCode = language === "dub" ? 1 : 0;
       setStreamUrl(`https://vidsrc.icu/embed/anime/${anime.id}/${episode}/${langCode}`);
     } else if (server === "hianimez") {
-      // Set the stream URL to the Hianime homepage when the server is Hianimez
-      setStreamUrl("https://hianimez.to"); // This will load the homepage of Hianime
+      const searchTitle = anime.title.english || anime.title.romaji;
+      const encodedTitle = encodeURIComponent(searchTitle);
+      setStreamUrl(`https://hianimez.to/search?keyword=${encodedTitle}`);
     }
   }, [anime, episode, language, server]);
 
@@ -65,8 +64,8 @@ const AnimeDetail = () => {
   const title = anime.title.english || anime.title.romaji;
   const trailer = anime.trailer?.site === "youtube" ? anime.trailer.id : null;
 
-  const handleNext = () => setEpisode(prev => prev + 1);
-  const handlePrevious = () => setEpisode(prev => (prev > 1 ? prev - 1 : 1));
+  const handleNext = () => setEpisode((prev) => prev + 1);
+  const handlePrevious = () => setEpisode((prev) => (prev > 1 ? prev - 1 : 1));
 
   return (
     <div className="detail-view">
@@ -99,7 +98,7 @@ const AnimeDetail = () => {
             type="number"
             min="1"
             value={episode}
-            onChange={e => setEpisode(Math.max(1, Number(e.target.value)))}
+            onChange={(e) => setEpisode(Math.max(1, Number(e.target.value)))}
             style={{ width: "4rem", textAlign: "center" }}
           />
           <button onClick={handleNext}>Next</button>
