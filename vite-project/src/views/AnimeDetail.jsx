@@ -6,12 +6,12 @@ const AnimeDetail = () => {
   const { anime_id } = useParams();
   const [anime, setAnime] = useState(null);
   const [episode, setEpisode] = useState(1);
-  const [language, setLanguage] = useState("sub"); // "sub" or "dub"
-  const [server, setServer] = useState("consumet"); // "consumet", "vidsrc", "megaplay"
+  const [language, setLanguage] = useState("sub");
+  const [server, setServer] = useState("vidsrc");
   const [streamUrl, setStreamUrl] = useState("");
-  const [loadingStream, setLoadingStream] = useState(false); // To handle loading state
+  const [loadingStream, setLoadingStream] = useState(false);
 
-  // 1. Fetch AniList data
+  // Fetch AniList data (anime details)
   useEffect(() => {
     fetch("https://graphql.anilist.co", {
       method: "POST",
@@ -44,50 +44,19 @@ const AnimeDetail = () => {
       .then(data => setAnime(data.data.Media));
   }, [anime_id]);
 
-  // 2. Fetch stream from Consumet API
+  // Generate the stream URL when server or episode changes
   useEffect(() => {
-    if (!anime || server !== "consumet") return;
+    if (!anime) return;
 
-    const query = language === "dub"
-      ? `${anime.title.english || anime.title.romaji} dub`
-      : anime.title.english || anime.title.romaji;
-
-    setLoadingStream(true); // Show loading indicator
-    fetch(`https://api.consumet.org/anime/gogoanime/${encodeURIComponent(query)}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.length > 0) {
-          const episodeId = `${data[0].id}-episode-${episode}`;
-          return fetch(`https://api.consumet.org/anime/gogoanime/watch/${episodeId}`);
-        } else {
-          throw new Error("Anime not found on Consumet.");
-        }
-      })
-      .then(res => res.json())
-      .then(data => {
-        const source = data.sources?.find(src => src.url.includes("vidstream") || src.url.includes("stream"));
-        if (source) {
-          setStreamUrl(source.url);
-        } else {
-          throw new Error("No valid stream source found.");
-        }
-      })
-      .catch(err => {
-        console.error("Error fetching stream:", err);
-        setStreamUrl("");
-      })
-      .finally(() => setLoadingStream(false)); // Hide loading indicator
-  }, [anime, episode, language, server]);
-
-  // 3. Handle Vidsrc & Megaplay URLs
-  useEffect(() => {
-    if (!anime || server === "consumet") return;
-
+    // Check the selected server and generate appropriate URLs
     if (server === "vidsrc") {
       setStreamUrl(`https://vidsrc.cc/v2/embed/anime/ani${anime.id}/${episode}/${language}`);
-    } else if (server === "megaplay") {
-      const langCode = language === "dub" ? "dub" : "sub";
-      setStreamUrl(`https://megaplay.buzz/stream/s-2/hianime-ep-${episode}/${langCode}`);
+    } else if (server === "vidsrc.icu") {
+      const langCode = language === "dub" ? 1 : 0;
+      setStreamUrl(`https://vidsrc.icu/embed/anime/${anime.id}/${episode}/${langCode}`);
+    } else if (server === "hianimez") {
+      // Set the stream URL to the Hianime homepage when the server is Hianimez
+      setStreamUrl("https://hianimez.to"); // This will load the homepage of Hianime
     }
   }, [anime, episode, language, server]);
 
@@ -145,16 +114,14 @@ const AnimeDetail = () => {
           <br /><br />
 
           <strong>Server:</strong>{" "}
-          <button onClick={() => setServer("consumet")} disabled={server === "consumet"}>Consumet</button>
           <button onClick={() => setServer("vidsrc")} disabled={server === "vidsrc"}>Vidsrc</button>
-          <button onClick={() => setServer("megaplay")} disabled={server === "megaplay"}>Megaplay</button>
+          <button onClick={() => setServer("vidsrc.icu")} disabled={server === "vidsrc.icu"}>Vidsrc.ICU</button>
+          <button onClick={() => setServer("hianimez")} disabled={server === "hianimez"}>Hianimez</button>
         </div>
       </div>
 
       {/* Stream Player */}
-      {loadingStream ? (
-        <p>Loading stream...</p>
-      ) : streamUrl ? (
+      {streamUrl ? (
         <iframe
           src={streamUrl}
           title={`Episode ${episode}`}

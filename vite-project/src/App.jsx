@@ -11,6 +11,7 @@ import AnimeView from "./views/AnimeView.jsx";
 import AnimeGenreView from "./views/AnimeGenreView.jsx";
 import AnimeDetail from "./views/AnimeDetail.jsx";
 import ErrorView from "./views/ErrorView.jsx";
+import SearchView from "./views/SearchView.jsx";  // Import SearchView
 import './App.css';
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -40,6 +41,9 @@ function App() {
           <Route path="genre/:genre" element={<AnimeGenreView />} />
           <Route path="details/:anime_id" element={<AnimeDetail />} />
         </Route>
+
+        {/* Search section */}
+        <Route path="/search" element={<SearchView />} /> {/* Add route for SearchView */}
 
         {/* Catch-all error page */}
         <Route path="*" element={<ErrorView />} />
