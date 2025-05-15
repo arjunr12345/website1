@@ -1,14 +1,53 @@
 .genre-view img {
-    width: 200px;
-    height: 300px;
+  width: 200px;
+  height: 300px;
 }
 
-.genre-view button {
-    width: 40px;
-    height: 40px;
-    border-radius: 100%;
-    border: 0;
-    background-color: red;
-    margin: 10px;
-    font-weight: 900;
+/* Circular pagination buttons */
+.genre-view .pagination button {
+  width: 40px;
+  height: 40px;
+  border-radius: 100%;
+  border: 0;
+  background-color: red;
+  margin: 10px;
+  font-weight: 900;
+  color: white;
+  cursor: pointer;
+}
+
+/* Streaming service filter buttons */
+.provider-buttons button {
+  min-width: 100px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+  margin: 5px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.provider-buttons button:hover {
+  opacity: 0.9;
+}
+
+/* Layout for the buttons section */
+.provider-buttons {
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* Movie grid layout */
+.movie-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+/* Pagination section layout */
+.pagination {
+  text-align: center;
+  margin-top: 1rem;
 }

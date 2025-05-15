@@ -1,68 +1,151 @@
 import { useState, useEffect } from "react";
-import axios from "axios"
+import axios from "axios";
 import { useParams } from "react-router-dom";
-import "./GenreView.css"
+import "./GenreView.css";
+
+const providers = [
+  { id: 8, name: "Netflix", color: "#e50914" },
+  { id: 337, name: "Disney+", color: "#113ccf" },
+  { id: 9, name: "Amazon Prime", color: "#00a8e1" },
+  { id: 387, name: "HBO Max", color: "#6e00f5" },
+  { id: 15, name: "Hulu", color: "#1ce783" },
+  { id: 350, name: "Apple TV+", color: "#999999" },
+  { id: 386, name: "Peacock", color: "#1f5fe4" },
+  { id: 531, name: "Paramount+", color: "#004b91" },
+  { id: 2552, name: "Starz", color: "#ec691f" },
+];
 
 const GenreView = () => {
-    const [movieData, setMovieData] = useState([]);
-    const [totalPages, setTotalPages] = useState(0);
-    const [page, setPage] = useState(1);
-    const [done, setDone] = useState(false);
-    const params = useParams();
+  const [movieData, setMovieData] = useState([]);
+  const [totalPages, setTotalPages] = useState(0);
+  const [page, setPage] = useState(1);
+  const [done, setDone] = useState(false);
+  const [provider, setProvider] = useState(null);
+  const { genre_id } = useParams();
 
-    const getMovies = async () => {
-        const movies = await axios.get(`https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page=${page}&sort_by=popularity.desc&with_genres=${params.genre_id}&api_key=${import.meta.env.VITE_TMDB_KEY}`);
-        setMovieData(movies.data.results);
-        setTotalPages(movies.data.total_pages);
-        // tmdb maxes out at 500 pages
-        if (totalPages >= 500) {
-            setTotalPages(500);
-        }
-        setDone(true);
+  const getMovies = async () => {
+    let url = `https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page=${page}&sort_by=popularity.desc&with_genres=${genre_id}&api_key=${import.meta.env.VITE_TMDB_KEY}`;
+
+    if (provider) {
+      url += `&with_watch_providers=${provider}&watch_region=US`;
     }
 
-    const movePage = (x) => {
-        setDone(false);
-        if (page + x >= totalPages) {
-            setPage(totalPages);
-        } else if (page + x <= 1) {
-            setPage(1);
-        } else {
-            setPage(page + x);
-        }
-        getMovies();
+    try {
+      const res = await axios.get(url);
+      setMovieData(res.data.results);
+      setTotalPages(res.data.total_pages > 500 ? 500 : res.data.total_pages);
+      setDone(true);
+    } catch (error) {
+      console.error("Error fetching movies:", error);
+      setMovieData([]);
+      setTotalPages(0);
+      setDone(true);
     }
+  };
 
-    const setCurrentPage = (x) => {
-        setDone(false);
-        if (x >= totalPages) {
-            setPage(totalPages);
-        } else {
-            setPage(x);
-        }
-        getMovies();
+  const movePage = (delta) => {
+    const next = page + delta;
+    if (next >= 1 && next <= totalPages) {
+      setPage(next);
+      setDone(false);
     }
+  };
 
-    useEffect(() => {
-        getMovies();
-    }, [done]);
+  const setCurrentPage = (n) => {
+    const target = Math.max(1, Math.min(n, totalPages));
+    setPage(target);
+    setDone(false);
+  };
 
-    return (
-        <div className="genre-view">
-            {movieData.map((movie) => (
-                <a key={movie.id} href={`/movies/details/${movie.id}`}>
-                    <img src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} alt="" />
-                </a>
-            ))}
-            <div>
-                <button type="submit" onClick={() => setCurrentPage(1)}>1</button>
-                <button type="submit" onClick={() => movePage(-1)}>{"<"}</button>
-                <span>{page}</span>
-                <button type="submit" onClick={() => movePage(1)}>{">"}</button>
-                <button type="submit" onClick={() => setCurrentPage(totalPages)}>{totalPages}</button>
-            </div>
-        </div>
-    )
-}
+  useEffect(() => {
+    getMovies();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [done, page, provider, genre_id]);
+
+  return (
+    <div className="genre-view">
+      <div className="provider-buttons">
+        {providers.map((p) => (
+          <button
+            key={p.id}
+            onClick={() => {
+              setProvider(p.id);
+              setPage(1);
+              setDone(false);
+            }}
+            style={{
+              backgroundColor: provider === p.id ? p.color : "#eee",
+              color: provider === p.id ? "white" : "black",
+              border: "none",
+              margin: "5px",
+              padding: "8px 12px",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontWeight: "bold",
+              transition: "0.3s ease",
+            }}
+          >
+            {p.name}
+          </button>
+        ))}
+        {provider && (
+          <button
+            onClick={() => {
+              setProvider(null);
+              setPage(1);
+              setDone(false);
+            }}
+            style={{
+              backgroundColor: "#888",
+              color: "white",
+              border: "none",
+              margin: "5px",
+              padding: "8px 12px",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontWeight: "bold",
+              transition: "0.3s ease",
+            }}
+          >
+            Clear Filter
+          </button>
+        )}
+      </div>
+
+      <div className="movie-grid">
+        {movieData.length > 0 ? (
+          movieData.map((movie) => (
+            <a key={movie.id} href={`/movies/details/${movie.id}`}>
+              <img
+                src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+                alt={movie.title}
+              />
+            </a>
+          ))
+        ) : (
+          <p style={{ textAlign: "center", width: "100%" }}>
+            No movies found for this filter.
+          </p>
+        )}
+      </div>
+
+      <div className="pagination">
+        <button onClick={() => setCurrentPage(1)} disabled={page === 1}>
+          1
+        </button>
+        <button onClick={() => movePage(-1)} disabled={page === 1}>
+          {"<"}
+        </button>
+        <span>{page}</span>
+        <button onClick={() => movePage(1)} disabled={page === totalPages}>
+          {">"}
+        </button>
+        <button onClick={() => setCurrentPage(totalPages)} disabled={page === totalPages}>
+          {totalPages}
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export default GenreView;

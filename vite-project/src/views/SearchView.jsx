@@ -39,6 +39,7 @@ const SearchView = () => {
                     coverImage {
                       large
                     }
+                    popularity
                   }
                 }
               }
@@ -52,33 +53,55 @@ const SearchView = () => {
       const tvShows = tvRes.results || [];
       const anime = animeRes.data?.Page?.media || [];
 
-      const mergedResults = [
-        ...movies.map(item => ({
-          type: "movie",
-          id: item.id,
-          title: item.title,
-          overview: item.overview,
-          poster: item.poster_path
-            ? `https://image.tmdb.org/t/p/w300${item.poster_path}`
-            : "https://via.placeholder.com/120x180?text=No+Image"
-        })),
-        ...tvShows.map(item => ({
-          type: "tv",
-          id: item.id,
-          title: item.name,
-          overview: item.overview,
-          poster: item.poster_path
-            ? `https://image.tmdb.org/t/p/w300${item.poster_path}`
-            : "https://via.placeholder.com/120x180?text=No+Image"
-        })),
-        ...anime.map(item => ({
-          type: "anime",
-          id: item.id,
-          title: item.title?.english || item.title?.romaji,
-          overview: item.description,
-          poster: item.coverImage?.large || "https://via.placeholder.com/120x180?text=No+Image"
-        }))
-      ];
+      // Map with relevanceRank based on position in results (0 = most relevant)
+      const movieMapped = movies.map((item, index) => ({
+        type: "movie",
+        id: item.id,
+        title: item.title,
+        overview: item.overview,
+        popularity: item.popularity || 0,
+        normalizedPopularity: item.popularity || 0,
+        relevanceRank: index,
+        poster: item.poster_path
+          ? `https://image.tmdb.org/t/p/w300${item.poster_path}`
+          : "https://via.placeholder.com/120x180?text=No+Image"
+      }));
+
+      const tvMapped = tvShows.map((item, index) => ({
+        type: "tv",
+        id: item.id,
+        title: item.name,
+        overview: item.overview,
+        popularity: item.popularity || 0,
+        normalizedPopularity: item.popularity || 0,
+        relevanceRank: index,
+        poster: item.poster_path
+          ? `https://image.tmdb.org/t/p/w300${item.poster_path}`
+          : "https://via.placeholder.com/120x180?text=No+Image"
+      }));
+
+      const animeMapped = anime.map((item, index) => ({
+        type: "anime",
+        id: item.id,
+        title: item.title?.english || item.title?.romaji,
+        overview: item.description,
+        popularity: item.popularity || 0,
+        // Normalize AniList popularity (divide by 1000 so it’s comparable)
+        normalizedPopularity: (item.popularity || 0) / 1000,
+        relevanceRank: index,
+        poster: item.coverImage?.large || "https://via.placeholder.com/120x180?text=No+Image"
+      }));
+
+      // Merge all results
+      const mergedResults = [...movieMapped, ...tvMapped, ...animeMapped];
+
+      // Sort by relevanceRank (lower better), then normalizedPopularity (higher better)
+      mergedResults.sort((a, b) => {
+        if (a.relevanceRank !== b.relevanceRank) {
+          return a.relevanceRank - b.relevanceRank;
+        }
+        return b.normalizedPopularity - a.normalizedPopularity;
+      });
 
       if (movieP === 1 && tvP === 1 && animeP === 1) {
         setResults(mergedResults);
@@ -152,8 +175,7 @@ const SearchView = () => {
                       marginRight: "8px",
                       fontWeight: "bold",
                       fontSize: "14px",
-                      color:
-                        item.type === "anime" ? "black" : "white",
+                      color: item.type === "anime" ? "black" : "white",
                       backgroundColor:
                         item.type === "movie"
                           ? "red"
@@ -180,10 +202,11 @@ const SearchView = () => {
                     style={{
                       textDecoration: "none",
                       color: "hotpink",
-                      fontWeight: "bold"
+                      fontWeight: "bold",
+                      transition: "color 0.2s"
                     }}
-                    onMouseEnter={(e) => e.target.style.color = "red"}
-                    onMouseLeave={(e) => e.target.style.color = "hotpink"}
+                    onMouseEnter={(e) => (e.target.style.color = "red")}
+                    onMouseLeave={(e) => (e.target.style.color = "hotpink")}
                   >
                     {item.title}
                   </Link>
@@ -194,7 +217,13 @@ const SearchView = () => {
                 <img
                   src={item.poster}
                   alt={item.title}
-                  style={{ width: "120px", height: "180px", objectFit: "cover", marginLeft: "20px", borderRadius: "4px" }}
+                  style={{
+                    width: "120px",
+                    height: "180px",
+                    objectFit: "cover",
+                    marginLeft: "20px",
+                    borderRadius: "4px"
+                  }}
                 />
               )}
             </div>

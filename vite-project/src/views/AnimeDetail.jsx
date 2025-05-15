@@ -33,6 +33,14 @@ const AnimeDetail = () => {
                 id
                 site
               }
+              episodes
+              averageScore
+              popularity
+              startDate {
+                year
+                month
+                day
+              }
             }
           }
         `,
@@ -64,12 +72,26 @@ const AnimeDetail = () => {
   const title = anime.title.english || anime.title.romaji;
   const trailer = anime.trailer?.site === "youtube" ? anime.trailer.id : null;
 
+  // Format start date
+  const startDate = anime.startDate
+    ? `${anime.startDate.year || "?"}-${anime.startDate.month?.toString().padStart(2, "0") || "??"}-${anime.startDate.day?.toString().padStart(2, "0") || "??"}`
+    : "N/A";
+
   const handleNext = () => setEpisode((prev) => prev + 1);
   const handlePrevious = () => setEpisode((prev) => (prev > 1 ? prev - 1 : 1));
 
   return (
     <div className="detail-view">
       <h1>{title}</h1>
+
+      {/* Additional details */}
+      <div className="additional-details" style={{ marginBottom: "20px" }}>
+        <p><strong>Start Date:</strong> {startDate}</p>
+        <p><strong>Episodes:</strong> {anime.episodes || "N/A"}</p>
+        <p><strong>Average Score:</strong> {anime.averageScore ? `${anime.averageScore}/100` : "N/A"}</p>
+        <p><strong>Popularity:</strong> {anime.popularity || "N/A"}</p>
+      </div>
+
       <img src={anime.coverImage.large} alt={title} />
       <p>{anime.description}</p>
       <p><strong>Genres:</strong> {anime.genres.join(", ")}</p>

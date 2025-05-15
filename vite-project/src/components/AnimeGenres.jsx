@@ -5,6 +5,7 @@ import "./Genres.css";
 const AnimeGenres = () => {
   const navigate = useNavigate();
   const [genres, setGenres] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const handleLogout = () => {
     localStorage.removeItem("currentUser");
@@ -12,21 +13,36 @@ const AnimeGenres = () => {
   };
 
   useEffect(() => {
-    fetch("https://graphql.anilist.co", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        query: `query { GenreCollection }`,
-      }),
-    })
-      .then(res => res.json())
-      .then(data => {
-        const genreList = data?.data?.GenreCollection || [];
-        const filtered = genreList.filter(g => typeof g === "string" && g.toLowerCase() !== "hentai");
-        setGenres(filtered);
+    const cached = localStorage.getItem("animeGenres");
+    if (cached) {
+      setGenres(JSON.parse(cached));
+      setLoading(false);
+    } else {
+      fetch("https://graphql.anilist.co", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: `query { GenreCollection }`,
+        }),
       })
-      .catch((err) => console.error("Failed to fetch genres:", err));
+        .then((res) => res.json())
+        .then((data) => {
+          const genreList = data?.data?.GenreCollection || [];
+          const filtered = genreList.filter(
+            (g) => typeof g === "string" && g.toLowerCase() !== "hentai"
+          );
+          setGenres(filtered);
+          localStorage.setItem("animeGenres", JSON.stringify(filtered));
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error("Failed to fetch genres:", err);
+          setLoading(false);
+        });
+    }
   }, []);
+
+  if (loading) return <p>Loading genres...</p>;
 
   return (
     <div className="genres">

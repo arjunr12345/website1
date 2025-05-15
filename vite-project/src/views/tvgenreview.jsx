@@ -3,78 +3,145 @@ import axios from "axios";
 import { useParams } from "react-router-dom";
 import "./GenreView.css";
 
+const providers = [
+  { id: 8, name: "Netflix", color: "#e50914" },
+  { id: 337, name: "Disney+", color: "#113ccf" },
+  { id: 9, name: "Amazon Prime", color: "#00a8e1" },
+  { id: 387, name: "HBO Max", color: "#6e00f5" },
+  { id: 15, name: "Hulu", color: "#1ce783" },
+  { id: 350, name: "Apple TV+", color: "#999999" },
+  { id: 386, name: "Peacock", color: "#1f5fe4" },
+  { id: 531, name: "Paramount+", color: "#004b91" },
+  { id: 2552, name: "Starz", color: "#ec691f" },
+];
+
 const TvGenreView = () => {
   const [tvData, setTvData] = useState([]);
   const [totalPages, setTotalPages] = useState(0);
   const [page, setPage] = useState(1);
   const [done, setDone] = useState(false);
+  const [provider, setProvider] = useState(null);
   const { genre_id } = useParams();
 
   const getTvShows = async () => {
-    const res = await axios.get(
-      `https://api.themoviedb.org/3/discover/tv`,
-      {
-        params: {
-          api_key: import.meta.env.VITE_TMDB_KEY,
-          language: "en-US",
-          page,
-          sort_by: "popularity.desc",
-          with_genres: genre_id,
-          include_null_first_air_dates: false,
-        },
-      }
-    );
-    setTvData(res.data.results);
-    // TMDb caps at 500 pages
-    setTotalPages(res.data.total_pages > 500 ? 500 : res.data.total_pages);
-    setDone(true);
+    let url = `https://api.themoviedb.org/3/discover/tv?api_key=${import.meta.env.VITE_TMDB_KEY}&language=en-US&page=${page}&sort_by=popularity.desc&with_genres=${genre_id}&include_null_first_air_dates=false`;
+
+    if (provider) {
+      url += `&with_watch_providers=${provider}&watch_region=US`;
+    }
+
+    try {
+      const res = await axios.get(url);
+      setTvData(res.data.results);
+      setTotalPages(res.data.total_pages > 500 ? 500 : res.data.total_pages);
+      setDone(true);
+    } catch (error) {
+      console.error("Error fetching TV shows:", error);
+      setTvData([]);
+      setTotalPages(0);
+      setDone(true);
+    }
   };
 
   const movePage = (delta) => {
-    setDone(false);
-    setPage((prev) => {
-      const next = prev + delta;
-      if (next < 1) return 1;
-      if (next > totalPages) return totalPages;
-      return next;
-    });
-    getTvShows();
+    const next = page + delta;
+    if (next >= 1 && next <= totalPages) {
+      setPage(next);
+      setDone(false);
+    }
   };
 
   const setCurrentPage = (n) => {
+    const target = Math.max(1, Math.min(n, totalPages));
+    setPage(target);
     setDone(false);
-    setPage(n > totalPages ? totalPages : n < 1 ? 1 : n);
-    getTvShows();
   };
 
+  // Fetch shows when page, provider, genre_id, or done changes
   useEffect(() => {
     getTvShows();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [done]);
+  }, [done, page, provider, genre_id]);
 
   return (
     <div className="genre-view">
-      {tvData.map((show) => (
-        <a key={show.id} href={`/tv/${show.id}`}>
-          <img
-            src={`https://image.tmdb.org/t/p/w500${show.poster_path}`}
-            alt={show.name}
-          />
-        </a>
-      ))}
-      <div className="pagination-controls">
-        <button onClick={() => setCurrentPage(1)}>1</button>
+      <div className="provider-buttons">
+        {providers.map((p) => (
+          <button
+            key={p.id}
+            onClick={() => {
+              setProvider(p.id);
+              setPage(1);
+              setDone(false);
+            }}
+            style={{
+              backgroundColor: provider === p.id ? p.color : "#eee",
+              color: provider === p.id ? "white" : "black",
+              border: "none",
+              margin: "5px",
+              padding: "8px 12px",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontWeight: "bold",
+              transition: "0.3s ease",
+            }}
+          >
+            {p.name}
+          </button>
+        ))}
+        {provider && (
+          <button
+            onClick={() => {
+              setProvider(null);
+              setPage(1);
+              setDone(false);
+            }}
+            style={{
+              backgroundColor: "#888",
+              color: "white",
+              border: "none",
+              margin: "5px",
+              padding: "8px 12px",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontWeight: "bold",
+              transition: "0.3s ease",
+            }}
+          >
+            Clear Filter
+          </button>
+        )}
+      </div>
+
+      <div className="movie-grid">
+        {tvData.length > 0 ? (
+          tvData.map((show) => (
+            <a key={show.id} href={`/tv/${show.id}`}>
+              <img
+                src={`https://image.tmdb.org/t/p/w500${show.poster_path}`}
+                alt={show.name}
+              />
+            </a>
+          ))
+        ) : (
+          <p style={{ textAlign: "center", width: "100%" }}>
+            No TV shows found for this filter.
+          </p>
+        )}
+      </div>
+
+      <div className="pagination">
+        <button onClick={() => setCurrentPage(1)} disabled={page === 1}>
+          1
+        </button>
         <button onClick={() => movePage(-1)} disabled={page === 1}>
           {"<"}
         </button>
         <span>{page}</span>
-        <button
-          onClick={() => movePage(1)}
-          disabled={page === totalPages}
-        >
+        <button onClick={() => movePage(1)} disabled={page === totalPages}>
           {">"}
         </button>
-        <button onClick={() => setCurrentPage(totalPages)}>
+        <button onClick={() => setCurrentPage(totalPages)} disabled={page === totalPages}>
           {totalPages}
         </button>
       </div>
