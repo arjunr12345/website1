@@ -8,6 +8,48 @@ const TvDetail = () => {
   const [videos, setVideos] = useState([]);
   const [watchProviders, setWatchProviders] = useState({});
   const [selectedPlayer, setSelectedPlayer] = useState("vidsrcTo");
+  const [selectedCountry, setSelectedCountry] = useState("US");
+
+  // List of countries with their ISO-3166 codes
+  const countries = [
+    { code: "US", name: "United States" },
+    { code: "GB", name: "United Kingdom" },
+    { code: "DE", name: "Germany" },
+    { code: "FR", name: "France" },
+    { code: "IN", name: "India" },
+    { code: "CA", name: "Canada" },
+    { code: "AU", name: "Australia" },
+    { code: "IT", name: "Italy" },
+    { code: "ES", name: "Spain" },
+    { code: "BR", name: "Brazil" },
+    { code: "MX", name: "Mexico" },
+    { code: "JP", name: "Japan" },
+    { code: "KR", name: "South Korea" },
+    { code: "CN", name: "China" },
+    { code: "RU", name: "Russia" },
+    { code: "ZA", name: "South Africa" },
+    { code: "SE", name: "Sweden" },
+    { code: "FI", name: "Finland" },
+    { code: "NO", name: "Norway" },
+    { code: "DK", name: "Denmark" },
+    { code: "PL", name: "Poland" },
+    { code: "BE", name: "Belgium" },
+    { code: "NL", name: "Netherlands" },
+    { code: "AR", name: "Argentina" },
+    { code: "CH", name: "Switzerland" },
+    { code: "AT", name: "Austria" },
+    { code: "PT", name: "Portugal" },
+    { code: "GR", name: "Greece" },
+    { code: "HU", name: "Hungary" },
+    { code: "CZ", name: "Czech Republic" },
+    { code: "UA", name: "Ukraine" },
+    { code: "EE", name: "Estonia" },
+    { code: "LV", name: "Latvia" },
+    { code: "LT", name: "Lithuania" },
+    { code: "RO", name: "Romania" },
+    { code: "BG", name: "Bulgaria" },
+    // Add other countries as necessary...
+  ];
 
   useEffect(() => {
     const fetchTV = async () => {
@@ -24,22 +66,43 @@ const TvDetail = () => {
         `https://api.themoviedb.org/3/tv/${id}/watch/providers?api_key=${import.meta.env.VITE_TMDB_KEY}`
       );
       const data = await res.json();
-      setWatchProviders(data.results?.US || {}); // Assuming US region
+      setWatchProviders(data.results?.[selectedCountry] || {}); // Update with selected country
     };
 
     fetchTV();
     fetchProviders();
-  }, [id]);
+  }, [id, selectedCountry]); // Refetch providers when country changes
 
   if (!tv) return <div className="detail-view">Loading...</div>;
 
   // Helper to open a link in a new tab
   const openLink = (url) => window.open(url, "_blank");
 
+  // Handle country change
+  const handleCountryChange = (event) => {
+    setSelectedCountry(event.target.value);
+  };
+
   return (
     <div className="detail-view">
       <div className="info-container">
         <h2>{tv.name}</h2>
+
+        {/* Country Selection Dropdown */}
+        <div>
+          <label htmlFor="country-select">Select Country:</label>
+          <select
+            id="country-select"
+            value={selectedCountry}
+            onChange={handleCountryChange}
+          >
+            {countries.map((country) => (
+              <option key={country.code} value={country.code}>
+                {country.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
         {/* Streaming Providers */}
         {(watchProviders.flatrate || watchProviders.buy) && (
@@ -148,7 +211,7 @@ const TvDetail = () => {
             </li>
             <li>
               <a
-                href={`https://www.blu-ray.com/search/?quicksearch=${encodeURIComponent(tv.name)}`}
+                href={`https://www.blu-ray.com/search/?quicksearch=1&quicksearch_country=US&quicksearch_keyword=${encodeURIComponent(tv.name)}&section=bluraymovies`}
                 target="_blank"
                 rel="noopener noreferrer"
               >

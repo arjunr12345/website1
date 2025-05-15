@@ -9,8 +9,54 @@ const DetailView = () => {
   const [trailers, setTrailers] = useState([]);
   const [watchProviders, setWatchProviders] = useState({});
   const [server, setServer] = useState("vidsrc.to");
+  const [selectedCountry, setSelectedCountry] = useState("US");
   const params = useParams();
 
+  // List of all country codes for dropdown
+  const countries = [
+    { code: "US", name: "United States" },
+    { code: "GB", name: "United Kingdom" },
+    { code: "DE", name: "Germany" },
+    { code: "FR", name: "France" },
+    { code: "IN", name: "India" },
+    { code: "CA", name: "Canada" },
+    { code: "AU", name: "Australia" },
+    { code: "IT", name: "Italy" },
+    { code: "ES", name: "Spain" },
+    { code: "BR", name: "Brazil" },
+    { code: "MX", name: "Mexico" },
+    { code: "JP", name: "Japan" },
+    { code: "KR", name: "South Korea" },
+    { code: "CN", name: "China" },
+    { code: "RU", name: "Russia" },
+    { code: "ZA", name: "South Africa" },
+    { code: "SE", name: "Sweden" },
+    { code: "FI", name: "Finland" },
+    { code: "NO", name: "Norway" },
+    { code: "DK", name: "Denmark" },
+    { code: "PL", name: "Poland" },
+    { code: "BE", name: "Belgium" },
+    { code: "NL", name: "Netherlands" },
+    { code: "AR", name: "Argentina" },
+    { code: "CH", name: "Switzerland" },
+    { code: "AT", name: "Austria" },
+    { code: "PT", name: "Portugal" },
+    { code: "GR", name: "Greece" },
+    { code: "FI", name: "Finland" },
+    { code: "HU", name: "Hungary" },
+    { code: "CZ", name: "Czech Republic" },
+    { code: "SK", name: "Slovakia" },
+    { code: "UA", name: "Ukraine" },
+    { code: "EE", name: "Estonia" },
+    { code: "LV", name: "Latvia" },
+    { code: "LT", name: "Lithuania" },
+    { code: "RO", name: "Romania" },
+    { code: "BG", name: "Bulgaria" },
+    { code: "PL", name: "Poland" },
+    // Add other countries as necessary...
+  ];
+
+  // Function to fetch movie data
   const getMovieData = async () => {
     const movieDetails = await axios.get(
       `https://api.themoviedb.org/3/movie/${params.id}?language=en-US&api_key=${import.meta.env.VITE_TMDB_KEY}`
@@ -24,12 +70,12 @@ const DetailView = () => {
 
     setMovieData(movieDetails.data);
     setVideos(trailerData.data.results);
-    setWatchProviders(providersData.data.results?.US || {});
+    setWatchProviders(providersData.data.results?.[selectedCountry] || {});
   };
 
   useEffect(() => {
     getMovieData();
-  }, [params.id]);
+  }, [params.id, selectedCountry]);
 
   useEffect(() => {
     const trailerList = videos.filter((video) => video.type === "Trailer");
@@ -49,9 +95,29 @@ const DetailView = () => {
     window.open(url, "_blank");
   };
 
+  const handleCountryChange = (event) => {
+    setSelectedCountry(event.target.value);
+  };
+
   return (
     <div className="detail-view">
       <h2>{movieData.title}</h2>
+
+      {/* Country Selection Dropdown */}
+      <div>
+        <label htmlFor="country-select">Select Country:</label>
+        <select
+          id="country-select"
+          value={selectedCountry}
+          onChange={handleCountryChange}
+        >
+          {countries.map((country) => (
+            <option key={country.code} value={country.code}>
+              {country.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {/* Watch and Buy Section - Centered */}
       <div>
