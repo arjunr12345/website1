@@ -21,13 +21,27 @@ const GenreView = () => {
   const [page, setPage] = useState(1);
   const [done, setDone] = useState(false);
   const [provider, setProvider] = useState(null);
+  const [country, setCountry] = useState("US"); // default country
+  const [countries, setCountries] = useState([]);
   const { genre_id } = useParams();
+
+  // Fetch country list from TMDb
+  const fetchCountries = async () => {
+    try {
+      const res = await axios.get(
+        `https://api.themoviedb.org/3/configuration/countries?api_key=${import.meta.env.VITE_TMDB_KEY}`
+      );
+      setCountries(res.data);
+    } catch (err) {
+      console.error("Error fetching countries:", err);
+    }
+  };
 
   const getMovies = async () => {
     let url = `https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page=${page}&sort_by=popularity.desc&with_genres=${genre_id}&api_key=${import.meta.env.VITE_TMDB_KEY}`;
 
     if (provider) {
-      url += `&with_watch_providers=${provider}&watch_region=US`;
+      url += `&with_watch_providers=${provider}&watch_region=${country}`;
     }
 
     try {
@@ -58,12 +72,37 @@ const GenreView = () => {
   };
 
   useEffect(() => {
+    fetchCountries();
+  }, []);
+
+  useEffect(() => {
     getMovies();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [done, page, provider, genre_id]);
+  }, [done, page, provider, genre_id, country]);
 
   return (
     <div className="genre-view">
+      {/* Country Dropdown */}
+      <div className="country-dropdown" style={{ marginBottom: "10px" }}>
+        <label htmlFor="country">Choose a country: </label>
+        <select
+          id="country"
+          value={country}
+          onChange={(e) => {
+            setCountry(e.target.value);
+            setPage(1);
+            setDone(false);
+          }}
+        >
+          {countries.map((c) => (
+            <option key={c.iso_3166_1} value={c.iso_3166_1}>
+              {c.english_name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Provider Buttons */}
       <div className="provider-buttons">
         {providers.map((p) => (
           <button
@@ -112,6 +151,7 @@ const GenreView = () => {
         )}
       </div>
 
+      {/* Movie Grid */}
       <div className="movie-grid">
         {movieData.length > 0 ? (
           movieData.map((movie) => (
@@ -129,6 +169,7 @@ const GenreView = () => {
         )}
       </div>
 
+      {/* Pagination */}
       <div className="pagination">
         <button onClick={() => setCurrentPage(1)} disabled={page === 1}>
           1

@@ -1,3 +1,4 @@
+// DetailView.jsx
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
@@ -12,7 +13,6 @@ const DetailView = () => {
   const [selectedCountry, setSelectedCountry] = useState("US");
   const params = useParams();
 
-  // List of all country codes for dropdown
   const countries = [
     { code: "US", name: "United States" },
     { code: "GB", name: "United Kingdom" },
@@ -42,35 +42,36 @@ const DetailView = () => {
     { code: "AT", name: "Austria" },
     { code: "PT", name: "Portugal" },
     { code: "GR", name: "Greece" },
-    { code: "FI", name: "Finland" },
     { code: "HU", name: "Hungary" },
     { code: "CZ", name: "Czech Republic" },
-    { code: "SK", name: "Slovakia" },
     { code: "UA", name: "Ukraine" },
     { code: "EE", name: "Estonia" },
     { code: "LV", name: "Latvia" },
     { code: "LT", name: "Lithuania" },
     { code: "RO", name: "Romania" },
     { code: "BG", name: "Bulgaria" },
-    { code: "PL", name: "Poland" },
-    // Add other countries as necessary...
   ];
 
-  // Function to fetch movie data
   const getMovieData = async () => {
-    const movieDetails = await axios.get(
-      `https://api.themoviedb.org/3/movie/${params.id}?language=en-US&api_key=${import.meta.env.VITE_TMDB_KEY}`
-    );
-    const trailerData = await axios.get(
-      `https://api.themoviedb.org/3/movie/${params.id}/videos?language=en-US&api_key=${import.meta.env.VITE_TMDB_KEY}`
-    );
-    const providersData = await axios.get(
-      `https://api.themoviedb.org/3/movie/${params.id}/watch/providers?api_key=${import.meta.env.VITE_TMDB_KEY}`
-    );
+    try {
+      const movieDetails = await axios.get(
+        `https://api.themoviedb.org/3/movie/${params.id}?language=en-US&api_key=${import.meta.env.VITE_TMDB_KEY}`
+      );
+      const trailerData = await axios.get(
+        `https://api.themoviedb.org/3/movie/${params.id}/videos?language=en-US&api_key=${import.meta.env.VITE_TMDB_KEY}`
+      );
+      const providersData = await axios.get(
+        `https://api.themoviedb.org/3/movie/${params.id}/watch/providers?api_key=${import.meta.env.VITE_TMDB_KEY}`
+      );
 
-    setMovieData(movieDetails.data);
-    setVideos(trailerData.data.results);
-    setWatchProviders(providersData.data.results?.[selectedCountry] || {});
+      setMovieData(movieDetails.data);
+      setVideos(trailerData.data.results);
+      setWatchProviders(
+        providersData.data.results?.[selectedCountry] || {}
+      );
+    } catch (error) {
+      console.error("Error fetching movie data:", error);
+    }
   };
 
   useEffect(() => {
@@ -81,19 +82,6 @@ const DetailView = () => {
     const trailerList = videos.filter((video) => video.type === "Trailer");
     setTrailers(trailerList);
   }, [videos]);
-
-  const getStreamUrl = () => {
-    if (server === "vidsrc.to") {
-      return `https://vidsrc.to/embed/movie/${params.id}`;
-    } else if (server === "vidsrc.cc") {
-      return `https://vidsrc.cc/v2/embed/movie/${params.id}`;
-    }
-    return "";
-  };
-
-  const openLink = (url) => {
-    window.open(url, "_blank");
-  };
 
   const handleCountryChange = (event) => {
     setSelectedCountry(event.target.value);
@@ -119,14 +107,19 @@ const DetailView = () => {
         </select>
       </div>
 
-      {/* Watch and Buy Section - Centered */}
+      {/* Watch and Buy Section */}
       <div>
         {(watchProviders.flatrate?.length > 0 ||
           watchProviders.buy?.length > 0) && <h3>Stream</h3>}
 
         {/* Streaming Services */}
         {watchProviders.flatrate && watchProviders.flatrate.length > 0 && (
-          <div style={{ textAlign: "center", marginBottom: "1rem" }}>
+          <div
+            style={{
+              textAlign: "center",
+              marginBottom: "1rem",
+            }}
+          >
             <div
               style={{
                 display: "inline-flex",
@@ -136,20 +129,13 @@ const DetailView = () => {
               }}
             >
               {watchProviders.flatrate.map((provider) => (
-                <button
+                <a
                   key={provider.provider_id}
-                  onClick={() =>
-                    openLink(
-                      `https://www.themoviedb.org/movie/${params.id}/watch`
-                    )
-                  }
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: "0",
-                  }}
+                  href={`https://www.themoviedb.org/movie/${params.id}/watch`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   title={provider.provider_name}
+                  style={{ display: "inline-block", padding: 0 }}
                 >
                   <img
                     src={`https://image.tmdb.org/t/p/original${provider.logo_path}`}
@@ -158,9 +144,10 @@ const DetailView = () => {
                       width: "50px",
                       height: "50px",
                       borderRadius: "8px",
+                      cursor: "pointer",
                     }}
                   />
-                </button>
+                </a>
               ))}
             </div>
           </div>
@@ -179,20 +166,13 @@ const DetailView = () => {
               }}
             >
               {watchProviders.buy.map((provider) => (
-                <button
+                <a
                   key={provider.provider_id}
-                  onClick={() =>
-                    openLink(
-                      `https://www.themoviedb.org/movie/${params.id}/watch`
-                    )
-                  }
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: "0",
-                  }}
+                  href={`https://www.themoviedb.org/movie/${params.id}/watch`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   title={provider.provider_name}
+                  style={{ display: "inline-block", padding: 0 }}
                 >
                   <img
                     src={`https://image.tmdb.org/t/p/original${provider.logo_path}`}
@@ -201,63 +181,118 @@ const DetailView = () => {
                       width: "50px",
                       height: "50px",
                       borderRadius: "8px",
+                      cursor: "pointer",
                     }}
                   />
-                </button>
+                </a>
               ))}
             </div>
           </div>
         )}
 
         {/* Buy Physically */}
-        <div style={{ textAlign: "center", marginTop: "1rem" }}>
+        <div style={{ marginBottom: "1rem" }}>
           <h4>Buy Physically:</h4>
-          <ul style={{ listStyle: "none", padding: 0 }}>
-            <li>
-              <a
-                href={`https://www.amazon.com/s?k=${encodeURIComponent(
-                  movieData.title + " DVD"
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Amazon (DVD)
-              </a>
-            </li>
-            <li>
-              <a
-                href={`https://www.bestbuy.com/site/searchpage.jsp?st=${encodeURIComponent(
-                  movieData.title + " Blu-ray"
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Best Buy (Blu-ray)
-              </a>
-            </li>
-            <li>
-              <a
-                href={`https://www.walmart.com/search?q=${encodeURIComponent(
-                  movieData.title + " Blu-ray"
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Walmart (Blu-ray)
-              </a>
-            </li>
-            <li>
-              <a
-                href={`https://www.blu-ray.com/search/?quicksearch=1&quicksearch_country=US&quicksearch_keyword=${encodeURIComponent(
-                  movieData.title
-                )}&section=bluraymovies`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Blu-ray.com
-              </a>
-            </li>
-          </ul>
+          <div
+            style={{
+              display: "inline-flex",
+              gap: "10px",
+              flexWrap: "wrap",
+            }}
+          >
+            <a
+              href={`https://www.amazon.com/s?k=${encodeURIComponent(
+                movieData.title + " DVD"
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Amazon (DVD/Blu-ray)"
+              style={{ display: "inline-block", padding: 0 }}
+            >
+              <img
+                src="https://image.tmdb.org/t/p/original/seGSXajazLMCKGB5hnRCidtjay1.jpg"
+                alt="Amazon DVD/Blu-ray"
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  objectFit: "contain",
+                  backgroundColor: "white",
+                }}
+              />
+            </a>
+
+            <a
+              href={`https://www.walmart.com/search/?query=${encodeURIComponent(
+                movieData.title + " DVD"
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Walmart"
+              style={{ display: "inline-block", padding: 0 }}
+            >
+              <img
+                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSz1Y86WWaVlA-qPIKjhDrxpIf_gPnP4Btw1A&s"
+                alt="Walmart"
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  objectFit: "contain",
+                  backgroundColor: "white",
+                }}
+              />
+            </a>
+
+            <a
+              href={`https://www.bestbuy.com/site/searchpage.jsp?st=${encodeURIComponent(
+                movieData.title + " DVD"
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Best Buy"
+              style={{ display: "inline-block", padding: 0 }}
+            >
+              <img
+                src="https://partners.bestbuy.com/image/image_gallery?uuid=7e4efc4e-432f-f497-fe99-ec311c640241&groupId=20126"
+                alt="Best Buy"
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  objectFit: "contain",
+                  backgroundColor: "white",
+                }}
+              />
+            </a>
+
+
+            <a
+              href={`https://www.blu-ray.com/search/?quicksearch=1&quicksearch_country=US&quicksearch_keyword=${encodeURIComponent(
+                movieData.title
+              )}&section=bluraymovies`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Blu-ray.com"
+              style={{ display: "inline-block", padding: 0 }}
+            >
+              <img
+                src="https://cdn-icons-png.flaticon.com/512/81/81046.png"
+                alt="Blu-ray.com"
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  objectFit: "contain",
+                  backgroundColor: "white",
+                }}
+              />
+            </a>
+          </div>
         </div>
       </div>
 
@@ -321,16 +356,26 @@ const DetailView = () => {
 
         <div style={{ marginBottom: "1rem" }}>
           <strong>Server:</strong>{" "}
-          <button onClick={() => setServer("vidsrc.to")} disabled={server === "vidsrc.to"}>
+          <button
+            onClick={() => setServer("vidsrc.to")}
+            disabled={server === "vidsrc.to"}
+          >
             VidSrc.to
           </button>
-          <button onClick={() => setServer("vidsrc.cc")} disabled={server === "vidsrc.cc"}>
+          <button
+            onClick={() => setServer("vidsrc.cc")}
+            disabled={server === "vidsrc.cc"}
+          >
             VidSrc.cc
           </button>
         </div>
 
         <iframe
-          src={getStreamUrl()}
+          src={
+            server === "vidsrc.to"
+              ? `https://vidsrc.to/embed/movie/${params.id}`
+              : `https://vidsrc.cc/v2/embed/movie/${params.id}`
+          }
           width="100%"
           height="500"
           allowFullScreen

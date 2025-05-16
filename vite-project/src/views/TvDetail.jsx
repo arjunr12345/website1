@@ -1,16 +1,18 @@
+// TVDetail.jsx
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { useParams } from "react-router-dom";
-import "./DetailView.css"; // reuse movie detail styles
+import "./DetailView.css";
 
-const TvDetail = () => {
-  const { id } = useParams();
-  const [tv, setTv] = useState(null);
+const TVDetail = () => {
+  const [tvData, setTvData] = useState({});
   const [videos, setVideos] = useState([]);
+  const [trailers, setTrailers] = useState([]);
   const [watchProviders, setWatchProviders] = useState({});
-  const [selectedPlayer, setSelectedPlayer] = useState("vidsrcTo");
+  const [server, setServer] = useState("vidsrc.to");
   const [selectedCountry, setSelectedCountry] = useState("US");
+  const params = useParams();
 
-  // List of countries with their ISO-3166 codes
   const countries = [
     { code: "US", name: "United States" },
     { code: "GB", name: "United Kingdom" },
@@ -48,66 +50,85 @@ const TvDetail = () => {
     { code: "LT", name: "Lithuania" },
     { code: "RO", name: "Romania" },
     { code: "BG", name: "Bulgaria" },
-    // Add other countries as necessary...
   ];
 
+  const getTvData = async () => {
+    try {
+      const tvDetails = await axios.get(
+        `https://api.themoviedb.org/3/tv/${params.id}?language=en-US&api_key=${import.meta.env.VITE_TMDB_KEY}`
+      );
+      const trailerData = await axios.get(
+        `https://api.themoviedb.org/3/tv/${params.id}/videos?language=en-US&api_key=${import.meta.env.VITE_TMDB_KEY}`
+      );
+      const providersData = await axios.get(
+        `https://api.themoviedb.org/3/tv/${params.id}/watch/providers?api_key=${import.meta.env.VITE_TMDB_KEY}`
+      );
+
+      setTvData(tvDetails.data);
+      setVideos(trailerData.data.results);
+      setWatchProviders(
+        providersData.data.results?.[selectedCountry] || {}
+      );
+    } catch (error) {
+      console.error("Failed to fetch TV data:", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchTV = async () => {
-      const res = await fetch(
-        `https://api.themoviedb.org/3/tv/${id}?api_key=${import.meta.env.VITE_TMDB_KEY}&append_to_response=videos`
-      );
-      const data = await res.json();
-      setTv(data);
-      setVideos(data.videos?.results || []);
-    };
+    getTvData();
+  }, [params.id, selectedCountry]);
 
-    const fetchProviders = async () => {
-      const res = await fetch(
-        `https://api.themoviedb.org/3/tv/${id}/watch/providers?api_key=${import.meta.env.VITE_TMDB_KEY}`
-      );
-      const data = await res.json();
-      setWatchProviders(data.results?.[selectedCountry] || {}); // Update with selected country
-    };
+  useEffect(() => {
+    const trailerList = videos.filter((video) => video.type === "Trailer");
+    setTrailers(trailerList);
+  }, [videos]);
 
-    fetchTV();
-    fetchProviders();
-  }, [id, selectedCountry]); // Refetch providers when country changes
+  const getStreamUrl = () => {
+    if (server === "vidsrc.to") {
+      return `https://vidsrc.to/embed/tv/${params.id}`;
+    } else if (server === "vidsrc.cc") {
+      return `https://vidsrc.cc/v2/embed/tv/${params.id}`;
+    }
+    return "";
+  };
 
-  if (!tv) return <div className="detail-view">Loading...</div>;
-
-  // Helper to open a link in a new tab
-  const openLink = (url) => window.open(url, "_blank");
-
-  // Handle country change
   const handleCountryChange = (event) => {
     setSelectedCountry(event.target.value);
   };
 
   return (
-    <div className="detail-view">
-      <div className="info-container">
-        <h2>{tv.name}</h2>
+    <div className="tv-detail">
+      <h2>{tvData.name}</h2>
 
-        {/* Country Selection Dropdown */}
-        <div>
-          <label htmlFor="country-select">Select Country:</label>
-          <select
-            id="country-select"
-            value={selectedCountry}
-            onChange={handleCountryChange}
+      {/* Country Selection */}
+      <div>
+        <label htmlFor="country-select">Select Country:</label>
+        <select
+          id="country-select"
+          value={selectedCountry}
+          onChange={handleCountryChange}
+        >
+          {countries.map((country) => (
+            <option key={country.code} value={country.code}>
+              {country.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Watch and Buy Section */}
+      <div>
+        {(watchProviders.flatrate?.length > 0 ||
+          watchProviders.buy?.length > 0) && <h3>Stream</h3>}
+
+        {/* Streaming Services */}
+        {watchProviders.flatrate && watchProviders.flatrate.length > 0 && (
+          <div
+            style={{
+              textAlign: "center",
+              marginBottom: "1rem",
+            }}
           >
-            {countries.map((country) => (
-              <option key={country.code} value={country.code}>
-                {country.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Streaming Providers */}
-        {(watchProviders.flatrate || watchProviders.buy) && (
-          <div style={{ textAlign: "center", marginBottom: "1rem" }}>
-            <h3>Stream on:</h3>
             <div
               style={{
                 display: "inline-flex",
@@ -116,26 +137,26 @@ const TvDetail = () => {
                 justifyContent: "center",
               }}
             >
-              {watchProviders.flatrate?.map((provider) => (
-                <button
+              {watchProviders.flatrate.map((provider) => (
+                <a
                   key={provider.provider_id}
-                  onClick={() =>
-                    openLink(`https://www.themoviedb.org/tv/${id}/watch`)
-                  }
+                  href={`https://www.themoviedb.org/tv/${params.id}/watch`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   title={provider.provider_name}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                  }}
+                  style={{ display: "inline-block", padding: 0 }}
                 >
                   <img
                     src={`https://image.tmdb.org/t/p/original${provider.logo_path}`}
                     alt={provider.provider_name}
-                    style={{ width: "50px", height: "50px", borderRadius: "8px" }}
+                    style={{
+                      width: "50px",
+                      height: "50px",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                    }}
                   />
-                </button>
+                </a>
               ))}
             </div>
           </div>
@@ -143,7 +164,7 @@ const TvDetail = () => {
 
         {/* Buy Digitally */}
         {watchProviders.buy && watchProviders.buy.length > 0 && (
-          <div style={{ textAlign: "center", marginBottom: "1rem" }}>
+          <div style={{ textAlign: "center" }}>
             <h4>Buy Digitally:</h4>
             <div
               style={{
@@ -154,146 +175,222 @@ const TvDetail = () => {
               }}
             >
               {watchProviders.buy.map((provider) => (
-                <button
+                <a
                   key={provider.provider_id}
-                  onClick={() =>
-                    openLink(`https://www.themoviedb.org/tv/${id}/watch`)
-                  }
+                  href={`https://www.themoviedb.org/tv/${params.id}/watch`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   title={provider.provider_name}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                  }}
+                  style={{ display: "inline-block", padding: 0 }}
                 >
                   <img
                     src={`https://image.tmdb.org/t/p/original${provider.logo_path}`}
                     alt={provider.provider_name}
-                    style={{ width: "50px", height: "50px", borderRadius: "8px" }}
+                    style={{
+                      width: "50px",
+                      height: "50px",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                    }}
                   />
-                </button>
+                </a>
               ))}
             </div>
           </div>
         )}
 
         {/* Buy Physically */}
-        <div style={{ textAlign: "center", marginBottom: "1rem" }}>
+        <div style={{ marginBottom: "1rem" }}>
           <h4>Buy Physically:</h4>
-          <ul style={{ listStyle: "none", padding: 0 }}>
-            <li>
-              <a
-                href={`https://www.amazon.com/s?k=${encodeURIComponent(tv.name + " DVD")}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Amazon (DVD)
-              </a>
-            </li>
-            <li>
-              <a
-                href={`https://www.bestbuy.com/site/searchpage.jsp?st=${encodeURIComponent(tv.name + " Blu-ray")}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Best Buy (Blu-ray)
-              </a>
-            </li>
-            <li>
-              <a
-                href={`https://www.walmart.com/search?q=${encodeURIComponent(tv.name + " Blu-ray")}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Walmart (Blu-ray)
-              </a>
-            </li>
-            <li>
-              <a
-                href={`https://www.blu-ray.com/search/?quicksearch=1&quicksearch_country=US&quicksearch_keyword=${encodeURIComponent(tv.name)}&section=bluraymovies`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Blu-ray.com
-              </a>
-            </li>
-          </ul>
+          <div
+            style={{
+              display: "inline-flex",
+              gap: "10px",
+              flexWrap: "wrap",
+            }}
+          >
+            <a
+              href={`https://www.amazon.com/s?k=${encodeURIComponent(
+                tvData.name + " DVD"
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Amazon (DVD/Blu-ray)"
+              style={{ display: "inline-block", padding: 0 }}
+            >
+              <img
+                src="https://image.tmdb.org/t/p/original/seGSXajazLMCKGB5hnRCidtjay1.jpg"
+                alt="Amazon DVD/Blu-ray"
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  objectFit: "contain",
+                  backgroundColor: "white",
+                }}
+              />
+            </a>
+
+            <a
+              href={`https://www.walmart.com/search/?query=${encodeURIComponent(
+                tvData.name + " DVD"
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Walmart"
+              style={{ display: "inline-block", padding: 0 }}
+            >
+              <img
+                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSz1Y86WWaVlA-qPIKjhDrxpIf_gPnP4Btw1A&s"
+                alt="Walmart"
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  objectFit: "contain",
+                  backgroundColor: "white",
+                }}
+              />
+            </a>
+
+            <a
+              href={`https://www.bestbuy.com/site/searchpage.jsp?st=${encodeURIComponent(
+                tvData.name + " DVD"
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Best Buy"
+              style={{ display: "inline-block", padding: 0 }}
+            >
+              <img
+                src="https://partners.bestbuy.com/image/image_gallery?uuid=7e4efc4e-432f-f497-fe99-ec311c640241&groupId=20126"
+                alt="Best Buy"
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  objectFit: "contain",
+                  backgroundColor: "white",
+                }}
+              />
+            </a>
+
+
+
+            <a
+              href={`https://www.blu-ray.com/search/?quicksearch=1&quicksearch_country=US&quicksearch_keyword=${encodeURIComponent(
+                tvData.name
+              )}&section=bluraymovies`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Blu-ray.com"
+              style={{ display: "inline-block", padding: 0 }}
+            >
+              <img
+                src="https://cdn-icons-png.flaticon.com/512/81/81046.png"
+                alt="Blu-ray.com"
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  objectFit: "contain",
+                  backgroundColor: "white",
+                }}
+              />
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* TV Info */}
+      <div>
+        <h3>Original Name:</h3>
+        <p>{tvData.original_name}</p>
+      </div>
+
+      <div>
+        <h3>Languages:</h3>
+        {tvData.languages?.map((lang) => (
+          <p key={lang}>{lang}</p>
+        ))}
+      </div>
+
+      <div>
+        <h3>First Air Date:</h3>
+        <p>{tvData.first_air_date}</p>
+      </div>
+
+      <div>
+        <h3>Popularity:</h3>
+        <p>{tvData.popularity}</p>
+      </div>
+
+      <div>
+        <h3>Vote Average:</h3>
+        <p>{tvData.vote_average}</p>
+      </div>
+
+      <div>
+        <h3>Vote Count:</h3>
+        <p>{tvData.vote_count}</p>
+      </div>
+
+      <div>
+        <h3>Overview:</h3>
+        <p>{tvData.overview}</p>
+      </div>
+
+      {/* Trailers */}
+      <div>
+        <h3>Trailers:</h3>
+        {trailers.map((video) => (
+          <iframe
+            key={video.id}
+            width="640"
+            height="360"
+            src={`https://youtube.com/embed/${video.key}`}
+            title={video.name}
+            allowFullScreen
+            frameBorder="0"
+          ></iframe>
+        ))}
+      </div>
+
+      {/* Stream Player */}
+      <div>
+        <h3>Watch Show:</h3>
+
+        <div style={{ marginBottom: "1rem" }}>
+          <strong>Server:</strong>{" "}
+          <button
+            onClick={() => setServer("vidsrc.to")}
+            disabled={server === "vidsrc.to"}
+          >
+            VidSrc.to
+          </button>
+          <button
+            onClick={() => setServer("vidsrc.cc")}
+            disabled={server === "vidsrc.cc"}
+          >
+            VidSrc.cc
+          </button>
         </div>
 
-        {/* Additional details */}
-        <div className="additional-details" style={{ marginBottom: "20px" }}>
-          <p>
-            <strong>Spoken Languages:</strong>{" "}
-            {tv.spoken_languages && tv.spoken_languages.length > 0
-              ? tv.spoken_languages.map((lang) => lang.english_name || lang.name).join(", ")
-              : "N/A"}
-          </p>
-          <p>
-            <strong>First Air Date:</strong> {tv.first_air_date || "N/A"}
-          </p>
-          <p>
-            <strong>Popularity:</strong> {tv.popularity?.toFixed(1) || "N/A"}
-          </p>
-          <p>
-            <strong>Vote Average:</strong> {tv.vote_average?.toFixed(1) || "N/A"}
-          </p>
-          <p>
-            <strong>Vote Count:</strong> {tv.vote_count || "N/A"}
-          </p>
-        </div>
-
-        <p>{tv.overview}</p>
-
-        <h3>Trailers</h3>
-        {videos
-          .filter((v) => v.site === "YouTube")
-          .map((video) => (
-            <iframe
-              key={video.id}
-              width="560"
-              height="315"
-              src={`https://www.youtube.com/embed/${video.key}`}
-              title={video.name}
-              allowFullScreen
-            />
-          ))}
-
-        <h3>Watch Series</h3>
-        {selectedPlayer === "vidsrcTo" ? (
-          <iframe
-            src={`https://vidsrc.to/embed/tv/${id}`}
-            width="100%"
-            height="500"
-            allowFullScreen
-            title="TV Player Vidsrc.to"
-          />
-        ) : selectedPlayer === "vidsrcCc" ? (
-          <iframe
-            src={`https://vidsrc.cc/v2/embed/tv/${id}`}
-            width="100%"
-            height="500"
-            allowFullScreen
-            title="TV Player Vidsrc.cc"
-          />
-        ) : (
-          <iframe
-            src={`https://embed.su/embed/tv/${id}/1/1`}
-            width="100%"
-            height="500"
-            allowFullScreen
-            title="TV Player Embed.su"
-          />
-        )}
-
-        <div className="player-toggle-buttons" style={{ marginTop: "12px" }}>
-          <button onClick={() => setSelectedPlayer("vidsrcTo")}>Vidsrc.to</button>
-          <button onClick={() => setSelectedPlayer("vidsrcCc")}>Vidsrc.cc</button>
-          <button onClick={() => setSelectedPlayer("embedSu")}>Embed.su</button>
-        </div>
+        <iframe
+          src={getStreamUrl()}
+          width="100%"
+          height="500"
+          allowFullScreen
+          frameBorder="0"
+          title="TV Stream Player"
+        ></iframe>
       </div>
     </div>
   );
 };
 
-export default TvDetail;
+export default TVDetail;
