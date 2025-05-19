@@ -29,7 +29,7 @@ const LiveTV = () => {
     setSelectedChannel(null);
     setError(null);
 
-    fetch(`http://localhost:4000/proxy?url=${encodeURIComponent(selectedPlaylist)}`)
+    fetch(selectedPlaylist)
       .then((res) => res.text())
       .then((data) => {
         const parsedChannels = parseM3U(data);
