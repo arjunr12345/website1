@@ -12,6 +12,7 @@ import AnimeGenreView from "./views/AnimeGenreView.jsx";
 import AnimeDetail from "./views/AnimeDetail.jsx";
 import ErrorView from "./views/ErrorView.jsx";
 import SearchView from "./views/SearchView.jsx";  // Import SearchView
+import LiveTV from "./views/LiveTV.jsx";
 import './App.css';
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -44,6 +45,8 @@ function App() {
 
         {/* Search section */}
         <Route path="/search" element={<SearchView />} /> {/* Add route for SearchView */}
+
+        <Route path="/live-tv" element={<LiveTV />} />
 
         {/* Catch-all error page */}
         <Route path="*" element={<ErrorView />} />

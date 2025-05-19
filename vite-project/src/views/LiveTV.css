@@ -1,0 +1,29 @@
+.livetv-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    text-align: center;
+}
+
+.channel-selector {
+  margin-bottom: 1rem;
+}
+
+.channel-selector select {
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+.video-player {
+  border: 2px solid #444;
+  border-radius: 10px;
+  overflow: hidden;
+  width: 90vw;     /* make it responsive to screen size */
+  max-width: 1200px;
+  height: 70vh;     /* increase height */
+}
+.video-player video {
+  width: 100%;
+  height: 100%;
+}

@@ -35,12 +35,13 @@ const Header = () => {
 
   return (
     <header className="header">
-      <NavLink to="/" className="logo-text">Dolor™ Stream</NavLink>
+      <NavLink to="/" className="logo-text">Dollor™ Stream</NavLink>
 
       <nav className="nav-toggle">
         <NavLink to={user ? "/movies" : "/login"} className={({ isActive }) => isActive && user ? "tab active" : "tab"}>Movies</NavLink>
         <NavLink to={user ? "/tv" : "/login"} className={({ isActive }) => isActive && user ? "tab active" : "tab"}>TV Shows</NavLink>
         <NavLink to={user ? "/anime" : "/login"} className={({ isActive }) => isActive && user ? "tab active" : "tab"}>Anime</NavLink>
+        <NavLink to={user ? "/live-tv" : "/login"} className={({ isActive }) => isActive && user ? "tab active" : "tab"}>Live TV</NavLink>
       </nav>
 
       {user && (
